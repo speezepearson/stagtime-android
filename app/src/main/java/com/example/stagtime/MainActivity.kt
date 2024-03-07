@@ -53,7 +53,7 @@ class MainActivity : ComponentActivity() {
 
         val exportButton = findViewById<Button>(R.id.button_export)
         exportButton.setOnClickListener {
-            val jsonBlob = exportFruitNotesAsJson(nearbyPingTimes)
+            val jsonBlob = exportFruitNotesAsJson()
             // Here you can do something with the jsonBlob, like displaying it, sharing it, or writing it to a file.
             // For demonstration, we'll just print it to the log.
             Log.d("SRP", jsonBlob)
@@ -82,14 +82,14 @@ class MainActivity : ComponentActivity() {
 
     }
 
-    private fun exportFruitNotesAsJson(pings: List<Instant>): String {
+    private fun exportFruitNotesAsJson(): String {
         val sharedPreferences = getSharedPreferences("FruitData", MODE_PRIVATE)
         val jsonArray = JSONArray()
 
-        pings.forEach { ping ->
-            val notes = sharedPreferences.getString(ping.toString(), "") ?: ""
+        sharedPreferences.all.forEach { pingData ->
+            val notes = sharedPreferences.getString(pingData.key.toString(), "") ?: ""
             val jsonObject = JSONObject()
-            jsonObject.put("ping", ping)
+            jsonObject.put("ping", pingData.key.toString())
             jsonObject.put("notes", notes)
             jsonArray.put(jsonObject)
         }
