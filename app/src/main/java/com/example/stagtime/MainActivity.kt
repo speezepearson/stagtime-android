@@ -21,12 +21,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat.getSystemService
+import androidx.core.content.FileProvider
 import com.example.stagtime.ui.theme.StagTimeTheme
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 import java.security.MessageDigest
 import java.time.Instant
 import kotlin.math.max
+
+const val applicationId = "com.example.stagtime"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,8 +58,9 @@ class MainActivity : ComponentActivity() {
         val exportButton = findViewById<Button>(R.id.button_export)
         exportButton.setOnClickListener {
             val jsonBlob = exportFruitNotesAsJson()
-            // Here you can do something with the jsonBlob, like displaying it, sharing it, or writing it to a file.
-            // For demonstration, we'll just print it to the log.
+            val filename = "fruit_notes.json"
+            saveToFile(filename, jsonBlob)
+            shareFile(filename)
             Log.d("SRP", jsonBlob)
         }
 
@@ -82,6 +87,20 @@ class MainActivity : ComponentActivity() {
 
     }
 
+    private fun saveToFile(filename: String, content: String) {
+        try {
+            // Open a private file associated with this Context's application package for writing
+            openFileOutput(filename, 0).use { outputStream ->
+                outputStream.write(content.toByteArray())
+                // Feedback or action after saving the file successfully
+                // For example, you could make a Toast here
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // Handle the error or give user feedback if needed
+        }
+    }
+
     private fun exportFruitNotesAsJson(): String {
         val sharedPreferences = getSharedPreferences("FruitData", MODE_PRIVATE)
         val jsonArray = JSONArray()
@@ -97,6 +116,20 @@ class MainActivity : ComponentActivity() {
         return jsonArray.toString()
     }
 
+
+    private fun shareFile(filename: String) {
+        val file = File(filesDir, filename)
+        val uri = FileProvider.getUriForFile(this, "${applicationId}.provider", file)
+
+        val shareIntent = Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_STREAM, uri)
+            type = "application/json"
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        startActivity(Intent.createChooser(shareIntent, null))
+    }
+
 }
 
 object Schedule {
@@ -106,7 +139,8 @@ object Schedule {
         val sha256 = MessageDigest.getInstance("SHA-256")
         val hash = sha256.digest(bytes)
 
-        val hashPartAsLong = hash.copyOfRange(0, 8).fold(0L) { acc, byte -> (acc shl 8) or (byte.toLong() and 0xFF) }
+        val hashPartAsLong =
+            hash.copyOfRange(0, 8).fold(0L) { acc, byte -> (acc shl 8) or (byte.toLong() and 0xFF) }
         return hashPartAsLong % RARITY == 0L
     }
 
@@ -166,7 +200,10 @@ object NotificationScheduler {
         val millisUntilPing = max(1, t.toEpochMilli() - Instant.now().toEpochMilli())
         val futureInMillis = SystemClock.elapsedRealtime() + millisUntilPing
         val alarmManager = getSystemService(context, AlarmManager::class.java)
-        Log.d("SRP", "scheduling notif: cur boot millis ${SystemClock.elapsedRealtime()}, waiting $millisUntilPing ms")
+        Log.d(
+            "SRP",
+            "scheduling notif: cur boot millis ${SystemClock.elapsedRealtime()}, waiting $millisUntilPing ms"
+        )
         alarmManager?.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, futureInMillis, pendingIntent)
         Log.d("SRP", "scheduled notif")
     }
