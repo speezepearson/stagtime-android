@@ -5,11 +5,9 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.app.RemoteInput
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.graphics.drawable.Icon
 import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
@@ -25,7 +23,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat.getSystemService
 import com.example.stagtime.ui.theme.StagTimeTheme
+import java.security.MessageDigest
+import java.time.Instant
 import kotlin.math.ln
+import kotlin.math.max
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,41 +61,59 @@ class MainActivity : ComponentActivity() {
 
 }
 
-object NotificationScheduler {
-    fun scheduleNextNotification(context: Context) {
-        val lambda = 1.0 / (60 * 60 * 1000) // Mean of 1 hour converted to milliseconds
-        val delay = (-Math.log(1 - Math.random()) / lambda).toLong()
-        scheduleNotification(context, 300)
+object Schedule {
+    private const val RARITY = 5L
+    private fun pseudorandomPredicate(input: Long): Boolean {
+        val bytes = input.toString().toByteArray()
+        val sha256 = MessageDigest.getInstance("SHA-256")
+        val hash = sha256.digest(bytes)
+
+        val hashPartAsLong = hash.copyOfRange(0, 8).fold(0L) { acc, byte -> (acc shl 8) or (byte.toLong() and 0xFF) }
+        return hashPartAsLong % RARITY == 0L
     }
 
-    val KEY_TEXT_REPLY = "key_text_reply"
+    fun lastBefore(t: Instant): Instant {
+        val nowSec = t.epochSecond
+        var sec = nowSec - 1
+        while (!pseudorandomPredicate(sec)) {
+            sec -= 1
+        }
+        return Instant.ofEpochSecond(sec)
+    }
+
+    fun firstAfter(t: Instant): Instant {
+        val nowSec = t.epochSecond
+        var sec = nowSec + 1
+        while (!pseudorandomPredicate(sec)) {
+            sec += 1
+        }
+        return Instant.ofEpochSecond(sec)
+    }
+}
+
+object NotificationScheduler {
+
+    fun scheduleNextNotification(context: Context) {
+        val t = Schedule.firstAfter(Instant.now())
+        Log.d("SRP", "scheduling for $t (currently ${Instant.now()})")
+        scheduleNotification(context, t)
+    }
 
     private fun getNotification(context: Context, content: String): Notification {
-        val remoteInput: RemoteInput = RemoteInput.Builder(KEY_TEXT_REPLY).setLabel("Type your reply here").build()
-        val replyIntent = Intent(context, ReplyReceiver::class.java)
-        val replyPendingIntent: PendingIntent =
-            PendingIntent.getBroadcast(context, 0, replyIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
-        val replyAction: Notification.Action = Notification.Action.Builder(
-            Icon.createWithResource(context, R.drawable.ic_launcher_background), // Use an appropriate reply icon here
-            "Reply",
-            replyPendingIntent
-        ).addRemoteInput(remoteInput).build()
-
         return Notification.Builder(context, "NOTIFICATION_CHANNEL_ID")
             .setContentTitle("Random Notification")
             .setContentText(content)
             .setSmallIcon(R.drawable.ic_launcher_background)
             .setChannelId("NOTIFICATION_CHANNEL_ID")
-            .addAction(replyAction)
             .build()
     }
 
-    private fun scheduleNotification(context: Context, delay: Long) {
+    private fun scheduleNotification(context: Context, t: Instant) {
         val notificationIntent = Intent(context, NotificationPublisher::class.java).apply {
-            putExtra(NotificationPublisher.NOTIFICATION_ID, REPLY_NOTIFICATION_ID)
+            putExtra(NotificationPublisher.NOTIFICATION_ID, 1)
             putExtra(
                 NotificationPublisher.NOTIFICATION,
-                getNotification(context, "This is a random notification.")
+                getNotification(context, "Ping for $t")
             )
         }
 
@@ -106,32 +125,16 @@ object NotificationScheduler {
 
         val pendingIntent = PendingIntent.getBroadcast(context, 0, notificationIntent, flags)
 
-        val futureInMillis = SystemClock.elapsedRealtime() + delay
+        val millisUntilPing = max(1, t.toEpochMilli() - Instant.now().toEpochMilli())
+        val futureInMillis = SystemClock.elapsedRealtime() + millisUntilPing
         val alarmManager = getSystemService(context, AlarmManager::class.java)
-        Log.d("SRP", "scheduling notif")
+        Log.d("SRP", "scheduling notif: cur boot millis ${SystemClock.elapsedRealtime()}, waiting $millisUntilPing ms")
         alarmManager?.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, futureInMillis, pendingIntent)
         Log.d("SRP", "scheduled notif")
     }
 
 }
 
-const val REPLY_NOTIFICATION_ID = 100
-
-
-class ReplyReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-        Log.d("SRP", "in onReceive")
-        val bundle = RemoteInput.getResultsFromIntent(intent)
-        if (bundle != null) {
-            val replyText = bundle.getCharSequence(NotificationScheduler.KEY_TEXT_REPLY)
-            // Use the reply text in your app
-            Log.d("SRP", "got text: $replyText")
-
-            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.cancel(REPLY_NOTIFICATION_ID)
-        }
-    }
-}
 
 class NotificationPublisher : BroadcastReceiver() {
 
@@ -144,7 +147,7 @@ class NotificationPublisher : BroadcastReceiver() {
         notificationManager.notify(id, notification)
 
         // Schedule the next notification
-//        NotificationScheduler.scheduleNextNotification(context)
+        NotificationScheduler.scheduleNextNotification(context)
     }
 
     companion object {
