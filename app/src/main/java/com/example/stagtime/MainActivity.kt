@@ -13,6 +13,7 @@ import android.os.Bundle
 import android.os.SystemClock
 import android.util.Log
 import android.widget.ArrayAdapter
+import android.widget.Button
 import android.widget.ListView
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.Text
@@ -21,6 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat.getSystemService
 import com.example.stagtime.ui.theme.StagTimeTheme
+import org.json.JSONArray
+import org.json.JSONObject
 import java.security.MessageDigest
 import java.time.Instant
 import kotlin.math.max
@@ -53,6 +56,15 @@ class MainActivity : ComponentActivity() {
             startActivity(intent)
         }
 
+        val exportButton = findViewById<Button>(R.id.button_export)
+        exportButton.setOnClickListener {
+            val jsonBlob = exportFruitNotesAsJson(nearbyPingTimes)
+            // Here you can do something with the jsonBlob, like displaying it, sharing it, or writing it to a file.
+            // For demonstration, we'll just print it to the log.
+            Log.d("SRP", jsonBlob)
+        }
+
+
         val channel = NotificationChannel(
             "NOTIFICATION_CHANNEL_ID",
             "Notification Channel",
@@ -66,6 +78,21 @@ class MainActivity : ComponentActivity() {
 
         NotificationScheduler.scheduleNextNotification(this)
 
+    }
+
+    private fun exportFruitNotesAsJson(pings: List<Instant>): String {
+        val sharedPreferences = getSharedPreferences("FruitData", MODE_PRIVATE)
+        val jsonArray = JSONArray()
+
+        pings.forEach { ping ->
+            val notes = sharedPreferences.getString(ping.toString(), "") ?: ""
+            val jsonObject = JSONObject()
+            jsonObject.put("ping", ping)
+            jsonObject.put("notes", notes)
+            jsonArray.put(jsonObject)
+        }
+
+        return jsonArray.toString()
     }
 
 }
