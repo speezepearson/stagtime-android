@@ -33,15 +33,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         Log.d("SRP", "in onCreate")
 
-        val nearbyPingTimes = mutableListOf(Schedule.firstAfter(Instant.now()))
-        nearbyPingTimes.add(0, Schedule.lastBefore(nearbyPingTimes.first()))
-        nearbyPingTimes.add(0, Schedule.lastBefore(nearbyPingTimes.first()))
-        nearbyPingTimes.add(0, Schedule.lastBefore(nearbyPingTimes.first()))
-        nearbyPingTimes.add(0, Schedule.lastBefore(nearbyPingTimes.first()))
-        nearbyPingTimes.add(Schedule.firstAfter(nearbyPingTimes.last()))
-        nearbyPingTimes.add(Schedule.firstAfter(nearbyPingTimes.last()))
-        nearbyPingTimes.add(Schedule.firstAfter(nearbyPingTimes.last()))
-        nearbyPingTimes.add(Schedule.firstAfter(nearbyPingTimes.last()))
+        val nearbyPingTimes = mutableListOf(Schedule.lastBefore(Instant.now()))
+        for (x in 1..5) {
+            nearbyPingTimes.add(Schedule.lastBefore(nearbyPingTimes.last()))
+        }
 
         setContentView(R.layout.activity_main)
 
@@ -64,6 +59,13 @@ class MainActivity : ComponentActivity() {
             Log.d("SRP", jsonBlob)
         }
 
+        val loadPrevButton = findViewById<Button>(R.id.button_load_more)
+        loadPrevButton.setOnClickListener {
+            for (x in 1..5) {
+                nearbyPingTimes.add(Schedule.lastBefore(nearbyPingTimes.last()))
+            }
+            adapter.notifyDataSetChanged()
+        }
 
         val channel = NotificationChannel(
             "NOTIFICATION_CHANNEL_ID",
