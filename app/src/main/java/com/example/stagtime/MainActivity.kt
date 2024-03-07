@@ -44,7 +44,7 @@ class MainActivity : ComponentActivity() {
 
         setContentView(R.layout.activity_main)
 
-        val listView = findViewById<ListView>(R.id.list_view_fruits)
+        val listView = findViewById<ListView>(R.id.list_view_pings)
         val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, nearbyPingTimes)
         listView.adapter = adapter
 
@@ -57,8 +57,8 @@ class MainActivity : ComponentActivity() {
 
         val exportButton = findViewById<Button>(R.id.button_export)
         exportButton.setOnClickListener {
-            val jsonBlob = exportFruitNotesAsJson()
-            val filename = "fruit_notes.json"
+            val jsonBlob = exportPingNotesAsJson()
+            val filename = "ping_notes.json"
             saveToFile(filename, jsonBlob)
             shareFile(filename)
             Log.d("SRP", jsonBlob)
@@ -101,15 +101,15 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun exportFruitNotesAsJson(): String {
-        val sharedPreferences = getSharedPreferences("FruitData", MODE_PRIVATE)
+    private fun exportPingNotesAsJson(): String {
+        val sharedPreferences = getSharedPreferences("PingData", MODE_PRIVATE)
         val jsonArray = JSONArray()
 
         sharedPreferences.all.forEach { pingData ->
-            val notes = sharedPreferences.getString(pingData.key.toString(), "") ?: ""
+            Log.d("SRP", "key ${pingData.key} has val ${pingData.value}")
             val jsonObject = JSONObject()
             jsonObject.put("ping", pingData.key.toString())
-            jsonObject.put("notes", notes)
+            jsonObject.put("notes", pingData.value)
             jsonArray.put(jsonObject)
         }
 

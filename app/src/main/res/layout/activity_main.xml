@@ -17,7 +17,7 @@
         android:text="Load More" />
 
     <ListView
-        android:id="@+id/list_view_fruits"
+        android:id="@+id/list_view_pings"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 

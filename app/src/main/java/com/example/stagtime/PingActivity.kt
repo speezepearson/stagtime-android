@@ -32,7 +32,7 @@ class PingActivity : Activity() {
         val editText = findViewById<EditText>(R.id.edit_text_user_input)
         val userInput = editText.text.toString()
 
-        val sharedPreferences = getSharedPreferences("FruitData", Context.MODE_PRIVATE)
+        val sharedPreferences = getSharedPreferences("PingData", Context.MODE_PRIVATE)
         with(sharedPreferences.edit()) {
             putString(ping.toString(), userInput)
             apply()
@@ -40,7 +40,7 @@ class PingActivity : Activity() {
     }
 
     private fun loadUserInput(ping: Instant): String {
-        val sharedPreferences = getSharedPreferences("FruitData", Context.MODE_PRIVATE)
+        val sharedPreferences = getSharedPreferences("PingData", Context.MODE_PRIVATE)
         return sharedPreferences.getString(ping.toString(), "") ?: ""
     }
 
