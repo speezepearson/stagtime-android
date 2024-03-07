@@ -17,6 +17,8 @@
 
         <receiver android:name=".NotificationPublisher"/>
 
+        <activity android:name=".PingActivity"/>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

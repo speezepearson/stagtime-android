@@ -12,11 +12,9 @@ import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
 import android.util.Log
+import android.widget.ArrayAdapter
+import android.widget.ListView
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -25,23 +23,34 @@ import androidx.core.content.ContextCompat.getSystemService
 import com.example.stagtime.ui.theme.StagTimeTheme
 import java.security.MessageDigest
 import java.time.Instant
-import kotlin.math.ln
 import kotlin.math.max
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d("SRP", "in onCreate")
-        setContent {
-            StagTimeTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    Greeting("Android")
-                }
-            }
+
+        val nearbyPingTimes = mutableListOf(Schedule.firstAfter(Instant.now()))
+        nearbyPingTimes.add(0, Schedule.lastBefore(nearbyPingTimes.first()))
+        nearbyPingTimes.add(0, Schedule.lastBefore(nearbyPingTimes.first()))
+        nearbyPingTimes.add(0, Schedule.lastBefore(nearbyPingTimes.first()))
+        nearbyPingTimes.add(0, Schedule.lastBefore(nearbyPingTimes.first()))
+        nearbyPingTimes.add(Schedule.firstAfter(nearbyPingTimes.last()))
+        nearbyPingTimes.add(Schedule.firstAfter(nearbyPingTimes.last()))
+        nearbyPingTimes.add(Schedule.firstAfter(nearbyPingTimes.last()))
+        nearbyPingTimes.add(Schedule.firstAfter(nearbyPingTimes.last()))
+
+        setContentView(R.layout.activity_main)
+
+        val listView = findViewById<ListView>(R.id.list_view_fruits)
+        val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, nearbyPingTimes)
+        listView.adapter = adapter
+
+
+        listView.setOnItemClickListener { _, _, position, _ ->
+            val intent = Intent(this, PingActivity::class.java)
+            intent.putExtra("PING_EPOCHSEC", nearbyPingTimes[position].epochSecond)
+            startActivity(intent)
         }
 
         val channel = NotificationChannel(
