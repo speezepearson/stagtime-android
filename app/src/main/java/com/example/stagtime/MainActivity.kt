@@ -166,7 +166,7 @@ object NotificationScheduler {
 
     private fun getNotification(context: Context, t: Instant): Notification {
         val pingIntent = Intent(context, PingActivity::class.java).apply {
-            putExtra(PING_EPOCHSEC_EXTRANAME, t.epochSecond)
+            putExtra("PING_EPOCHSEC", t.epochSecond)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
         return Notification.Builder(context, "NOTIFICATION_CHANNEL_ID")
