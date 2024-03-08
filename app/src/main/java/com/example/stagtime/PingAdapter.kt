@@ -6,14 +6,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.TextView
-import java.text.SimpleDateFormat
 import java.time.Instant
-import java.util.Locale
 
 class PingAdapter(context: Context, private val pings: List<Instant>) :
     ArrayAdapter<Instant>(context, 0, pings) {
-
-    private val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
         val view =
