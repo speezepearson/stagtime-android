@@ -24,16 +24,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat.getSystemService
-import androidx.core.content.FileProvider
 import com.example.stagtime.ui.theme.StagTimeTheme
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.File
 import java.security.MessageDigest
 import java.time.Instant
 import kotlin.math.max
-
-const val applicationId = "com.example.stagtime"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
