@@ -133,7 +133,7 @@ class MainActivity : ComponentActivity() {
 }
 
 object Schedule {
-    private const val RARITY = 5L
+    private const val RARITY = 3600L
     private fun pseudorandomPredicate(input: Long): Boolean {
         val bytes = input.toString().toByteArray()
         val sha256 = MessageDigest.getInstance("SHA-256")
