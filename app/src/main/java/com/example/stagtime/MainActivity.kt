@@ -168,10 +168,15 @@ object NotificationScheduler {
         scheduleNotification(context, t)
     }
 
-    private fun getNotification(context: Context, content: String): Notification {
+    private fun getNotification(context: Context, t: Instant): Notification {
+        val pingIntent = Intent(context, PingActivity::class.java).apply {
+            putExtra(PING_EPOCHSEC_EXTRANAME, t.epochSecond)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
         return Notification.Builder(context, "NOTIFICATION_CHANNEL_ID")
             .setContentTitle("Random Notification")
-            .setContentText(content)
+            .setContentText("Ping for $t")
+            .setContentIntent(PendingIntent.getActivity(context, 0, pingIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
             .setSmallIcon(R.drawable.ic_launcher_background)
             .setChannelId("NOTIFICATION_CHANNEL_ID")
             .build()
@@ -180,9 +185,10 @@ object NotificationScheduler {
     private fun scheduleNotification(context: Context, t: Instant) {
         val notificationIntent = Intent(context, NotificationPublisher::class.java).apply {
             putExtra(NotificationPublisher.NOTIFICATION_ID, 1)
+            putExtra(NotificationPublisher.PING_EPOCHSEC, t.epochSecond)
             putExtra(
                 NotificationPublisher.NOTIFICATION,
-                getNotification(context, "Ping for $t")
+                getNotification(context, t)
             )
         }
 
@@ -225,6 +231,7 @@ class NotificationPublisher : BroadcastReceiver() {
     companion object {
         const val NOTIFICATION_ID = "notification-id"
         const val NOTIFICATION = "notification"
+        const val PING_EPOCHSEC = "ping-epochsec"
     }
 }
 

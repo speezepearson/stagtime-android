@@ -8,12 +8,16 @@ import android.widget.EditText
 import android.widget.TextView
 import java.time.Instant
 
+val PING_EPOCHSEC_EXTRANAME = "com.example.stagtime.PingActivity.PingEpochSec"
+
 class PingActivity : Activity() {
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_ping)
 
-        val pingSec = intent.getLongExtra("PING_EPOCHSEC", 0)
+        val pingSec = intent.getLongExtra(PING_EPOCHSEC_EXTRANAME, 0)
         val ping = Instant.ofEpochSecond(pingSec)
         val textView = findViewById<TextView>(R.id.text_view_ping_time)
         textView.text = ping.toString()
