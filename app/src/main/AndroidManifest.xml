@@ -18,6 +18,7 @@
         <receiver android:name=".NotificationPublisher"/>
 
         <activity android:name=".PingActivity"/>
+        <activity android:name=".EditTagsActivity"/>
 
         <activity
             android:name=".MainActivity"

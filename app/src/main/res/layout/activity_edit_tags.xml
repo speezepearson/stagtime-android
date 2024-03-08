@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <Button
+        android:id="@+id/button_back"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Back" />
+
+    <EditText
+        android:id="@+id/edit_text_user_input"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="top|start"
+        android:hint="foo\nbar\nbaz"
+        android:inputType="textMultiLine"
+        android:lines="8"
+        android:minLines="6"
+        android:scrollbars="vertical" />
+</LinearLayout>

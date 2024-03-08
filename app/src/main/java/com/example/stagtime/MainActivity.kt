@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat.getSystemService
 import com.example.stagtime.ui.theme.StagTimeTheme
+import com.google.gson.Gson
 import org.json.JSONArray
 import org.json.JSONObject
 import java.security.MessageDigest
@@ -34,6 +35,10 @@ import kotlin.math.max
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+//        with (getSharedPreferences("PingData", Context.MODE_PRIVATE).edit()) {
+//            clear()
+//            apply()
+//        }
         Log.d("SRP", "in onCreate")
 
         val nearbyPingTimes = mutableListOf(Schedule.lastBefore(Instant.now()))
@@ -60,6 +65,12 @@ class MainActivity : ComponentActivity() {
             val filename = "ping_notes.${Instant.now()}.json"
             saveToFile(filename, jsonBlob)
             Log.d("SRP", jsonBlob)
+        }
+
+        val editTagsButton = findViewById<Button>(R.id.button_edit_tags)
+        editTagsButton.setOnClickListener {
+            val intent = Intent(this, EditTagsActivity::class.java)
+            startActivity(intent)
         }
 
         val loadPrevButton = findViewById<Button>(R.id.button_load_more)
@@ -109,18 +120,15 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun exportPingNotesAsJson(): String {
-        val sharedPreferences = getSharedPreferences("PingData", MODE_PRIVATE)
-        val jsonArray = JSONArray()
-
-        sharedPreferences.all.forEach { pingData ->
-            Log.d("SRP", "key ${pingData.key} has val ${pingData.value}")
-            val jsonObject = JSONObject()
-            jsonObject.put("ping", pingData.key.toString())
-            jsonObject.put("notes", pingData.value)
-            jsonArray.put(jsonObject)
-        }
-
-        return jsonArray.toString()
+        val pingData = getSharedPreferences("PingData", Context.MODE_PRIVATE)
+        val res = Gson().toJson(pingData.all.mapValues { (_,v) ->
+                Gson().fromJson(
+                    v as String,
+                    PingInfo::class.java
+                )
+             })
+        Log.d("SRP", "exporting: " + res.toString())
+        return res
     }
 
 }
