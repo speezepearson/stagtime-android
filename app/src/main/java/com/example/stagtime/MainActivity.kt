@@ -6,15 +6,18 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
+import android.provider.MediaStore
 import android.util.Log
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.ListView
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -58,9 +61,8 @@ class MainActivity : ComponentActivity() {
         val exportButton = findViewById<Button>(R.id.button_export)
         exportButton.setOnClickListener {
             val jsonBlob = exportPingNotesAsJson()
-            val filename = "ping_notes.json"
+            val filename = "ping_notes.${Instant.now()}.json"
             saveToFile(filename, jsonBlob)
-            shareFile(filename)
             Log.d("SRP", jsonBlob)
         }
 
@@ -88,16 +90,25 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun saveToFile(filename: String, content: String) {
-        try {
-            // Open a private file associated with this Context's application package for writing
-            openFileOutput(filename, 0).use { outputStream ->
-                outputStream.write(content.toByteArray())
-                // Feedback or action after saving the file successfully
-                // For example, you could make a Toast here
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val values = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
+                put(MediaStore.MediaColumns.MIME_TYPE, "application/json")
+                put(MediaStore.MediaColumns.RELATIVE_PATH, "Download/")
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            // Handle the error or give user feedback if needed
+
+            val resolver = contentResolver
+            val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+
+            uri?.let {
+                resolver.openOutputStream(it).use { outputStream ->
+                    outputStream?.write(content.toByteArray())
+                }
+                Toast.makeText(this, "File saved to Downloads!", Toast.LENGTH_SHORT).show()
+
+            }
+        } else {
+            // For Android 9 and below, use the method described in the next section
         }
     }
 
