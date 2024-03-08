@@ -16,7 +16,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="top|start"
-        android:hint="foo\nbar\nbaz"
+        android:hint="foo, bar, baz"
         android:inputType="textMultiLine"
         android:lines="8"
         android:minLines="6"
