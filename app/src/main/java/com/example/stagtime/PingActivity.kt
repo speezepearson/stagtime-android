@@ -3,7 +3,6 @@ package com.example.stagtime
 import android.app.Activity
 import android.content.Context
 import android.os.Bundle
-import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -17,6 +16,42 @@ data class PingInfo(
     var notes: String = "",
     var tags: Set<String> = setOf(),
 )
+
+fun loadPingDataForTime(context: Context, ping: Instant): PingInfo {
+    val prefs = context.getSharedPreferences("PingData", Context.MODE_PRIVATE)
+    val pingJson = prefs.getString(ping.toString(), null)
+    return if (pingJson == null) {
+        PingInfo()
+    } else {
+        Gson().fromJson(pingJson, PingInfo::class.java)
+    }
+}
+
+fun savePingDataForTime(context: Context, ping: Instant, pingInfo: PingInfo) {
+    with(context.getSharedPreferences("PingData", Context.MODE_PRIVATE).edit()) {
+        putString(ping.toString(), Gson().toJson(pingInfo))
+        apply()
+    }
+}
+
+fun loadAllPingData(context: Context): Map<Instant, PingInfo> {
+    val prefs = context.getSharedPreferences("PingData", Context.MODE_PRIVATE)
+    val pingData = mutableMapOf<Instant, PingInfo>()
+    prefs.all.forEach { (k, v) ->
+        val ping = Instant.parse(k)
+        val pingInfo = Gson().fromJson(v as String, PingInfo::class.java)
+        pingData[ping] = pingInfo
+    }
+    return pingData
+}
+
+fun clearAllPingData(context: Context) {
+    val prefs = context.getSharedPreferences("PingData", Context.MODE_PRIVATE)
+    with (prefs.edit()) {
+        clear()
+        apply()
+    }
+}
 
 class PingActivity : Activity() {
 
@@ -32,14 +67,7 @@ class PingActivity : Activity() {
         val textView = findViewById<TextView>(R.id.text_view_ping_time)
         textView.text = formatInstant(ping)
 
-        val prevJson =
-            getSharedPreferences("PingData", Context.MODE_PRIVATE).getString(ping.toString(), null)
-        Log.d("SRP", "prevJson: " + prevJson)
-        pingInfo = if (prevJson == null) {
-            PingInfo()
-        } else {
-            Gson().fromJson(prevJson, PingInfo::class.java)
-        }
+        pingInfo = loadPingDataForTime(this, ping)
 
         createFlagButtons()
 
@@ -94,10 +122,7 @@ class PingActivity : Activity() {
 
     private fun savePingInfo() {
         pingInfo.notes = findViewById<EditText>(R.id.edit_text_user_input).text.toString()
-        with(getSharedPreferences("PingData", Context.MODE_PRIVATE).edit()) {
-            putString(ping.toString(), Gson().toJson(pingInfo))
-            apply()
-        }
+        savePingDataForTime(this, ping, pingInfo)
     }
 
     override fun onPause() {

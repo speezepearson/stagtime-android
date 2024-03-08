@@ -43,10 +43,7 @@ fun formatInstant(t: Instant): String {
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        with (getSharedPreferences("PingData", Context.MODE_PRIVATE).edit()) {
-//            clear()
-//            apply()
-//        }
+//        clearAllPingData(this)
         Log.d("SRP", "in onCreate")
 
         val nearbyPingTimes = mutableListOf(Schedule.lastBefore(Instant.now()))
@@ -137,13 +134,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun exportPingNotesAsJson(): String {
-        val pingData = getSharedPreferences("PingData", Context.MODE_PRIVATE)
-        val res = Gson().toJson(pingData.all.mapValues { (_, v) ->
-            Gson().fromJson(
-                v as String,
-                PingInfo::class.java
-            )
-        })
+        val res = Gson().toJson(loadAllPingData(this))
         Log.d("SRP", "exporting: " + res.toString())
         return res
     }
