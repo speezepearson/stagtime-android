@@ -127,20 +127,6 @@ class MainActivity : ComponentActivity() {
         return jsonArray.toString()
     }
 
-
-    private fun shareFile(filename: String) {
-        val file = File(filesDir, filename)
-        val uri = FileProvider.getUriForFile(this, "${applicationId}.provider", file)
-
-        val shareIntent = Intent().apply {
-            action = Intent.ACTION_SEND
-            putExtra(Intent.EXTRA_STREAM, uri)
-            type = "application/json"
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-        startActivity(Intent.createChooser(shareIntent, null))
-    }
-
 }
 
 object Schedule {
