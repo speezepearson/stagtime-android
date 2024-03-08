@@ -17,11 +17,11 @@ data class PingInfo(
     var tags: Set<String> = setOf(),
 )
 
-fun loadPingDataForTime(context: Context, ping: Instant): PingInfo {
+fun loadPingDataForTime(context: Context, ping: Instant): PingInfo? {
     val prefs = context.getSharedPreferences("PingData", Context.MODE_PRIVATE)
     val pingJson = prefs.getString(ping.toString(), null)
     return if (pingJson == null) {
-        PingInfo()
+        null
     } else {
         Gson().fromJson(pingJson, PingInfo::class.java)
     }
@@ -67,7 +67,7 @@ class PingActivity : Activity() {
         val textView = findViewById<TextView>(R.id.text_view_ping_time)
         textView.text = formatInstant(ping)
 
-        pingInfo = loadPingDataForTime(this, ping)
+        pingInfo = loadPingDataForTime(this, ping) ?: PingInfo()
 
         createFlagButtons()
 
