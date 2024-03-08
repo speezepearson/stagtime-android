@@ -31,7 +31,7 @@ class PingActivity : Activity() {
         val pingSec = intent.getLongExtra("PING_EPOCHSEC", 0)
         ping = Instant.ofEpochSecond(pingSec)
         val textView = findViewById<TextView>(R.id.text_view_ping_time)
-        textView.text = ping.toString()
+        textView.text = formatInstant(ping)
 
         val prevJson = getSharedPreferences("PingData", Context.MODE_PRIVATE).getString(ping.toString(), null)
         Log.d("SRP", "prevJson: " + prevJson)

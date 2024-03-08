@@ -27,8 +27,20 @@ import androidx.core.content.ContextCompat.getSystemService
 import com.example.stagtime.ui.theme.StagTimeTheme
 import com.google.gson.Gson
 import java.security.MessageDigest
+import java.text.SimpleDateFormat
 import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import kotlin.math.max
+
+fun formatInstant(t: Instant): String {
+    return DateTimeFormatter
+        .ofPattern("uuuu-MM-dd HH:mm:ss")
+        .withLocale(Locale.getDefault())
+        .withZone(ZoneId.systemDefault())
+        .format(t)
+}
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,9 +59,8 @@ class MainActivity : ComponentActivity() {
         setContentView(R.layout.activity_main)
 
         val listView = findViewById<ListView>(R.id.list_view_pings)
-        val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, nearbyPingTimes)
+        val adapter = PingAdapter(this, nearbyPingTimes)
         listView.adapter = adapter
-
 
         listView.setOnItemClickListener { _, _, position, _ ->
             val intent = Intent(this, PingActivity::class.java)
@@ -119,12 +130,12 @@ class MainActivity : ComponentActivity() {
 
     private fun exportPingNotesAsJson(): String {
         val pingData = getSharedPreferences("PingData", Context.MODE_PRIVATE)
-        val res = Gson().toJson(pingData.all.mapValues { (_,v) ->
-                Gson().fromJson(
-                    v as String,
-                    PingInfo::class.java
-                )
-             })
+        val res = Gson().toJson(pingData.all.mapValues { (_, v) ->
+            Gson().fromJson(
+                v as String,
+                PingInfo::class.java
+            )
+        })
         Log.d("SRP", "exporting: " + res.toString())
         return res
     }
@@ -177,8 +188,15 @@ object NotificationScheduler {
         }
         return Notification.Builder(context, "NOTIFICATION_CHANNEL_ID")
             .setContentTitle("Random Notification")
-            .setContentText("Ping for $t")
-            .setContentIntent(PendingIntent.getActivity(context, 0, pingIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
+            .setContentText("Ping for ${formatInstant(t)}")
+            .setContentIntent(
+                PendingIntent.getActivity(
+                    context,
+                    0,
+                    pingIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+            )
             .setSmallIcon(R.drawable.ic_launcher_background)
             .setChannelId("NOTIFICATION_CHANNEL_ID")
             .build()
