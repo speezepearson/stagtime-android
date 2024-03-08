@@ -13,6 +13,13 @@
         android:layout_height="wrap_content"
         android:text="Back" />
 
+    <TextView
+        android:id="@+id/text_view_ping_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="24sp"
+        android:layout_marginTop="20dp" />
+
     <com.google.android.flexbox.FlexboxLayout
         android:id="@+id/tags_container"
         android:layout_width="match_parent"
@@ -23,13 +30,6 @@
         app:alignItems="flex_start"
         app:alignContent="flex_start">
     </com.google.android.flexbox.FlexboxLayout>
-
-    <TextView
-        android:id="@+id/text_view_ping_time"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="24sp"
-        android:layout_marginTop="20dp" />
 
     <EditText
         android:id="@+id/edit_text_user_input"
