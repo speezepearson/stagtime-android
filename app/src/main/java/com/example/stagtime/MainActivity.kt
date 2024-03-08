@@ -26,8 +26,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat.getSystemService
 import com.example.stagtime.ui.theme.StagTimeTheme
 import com.google.gson.Gson
-import org.json.JSONArray
-import org.json.JSONObject
 import java.security.MessageDigest
 import java.time.Instant
 import kotlin.math.max
