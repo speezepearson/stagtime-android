@@ -60,14 +60,16 @@ class PingActivity : Activity() {
             val button = Button(this)
             button.text = tag
             button.textSize = 12f
-            button.setPadding(0, 0, 0, 0)
+            button.setPadding(20, 20, 20, 20)
             button.minWidth = 0
             button.minHeight = 0
+            button.minimumHeight = 0
+            button.minimumWidth = 0
             button.layoutParams = FlexboxLayout.LayoutParams(
                 FlexboxLayout.LayoutParams.WRAP_CONTENT,
                 FlexboxLayout.LayoutParams.WRAP_CONTENT
             ).apply {
-                setMargins(0, 0, 0, 0)
+                setMargins(2, 2, 2, 2)
             }
 
 
