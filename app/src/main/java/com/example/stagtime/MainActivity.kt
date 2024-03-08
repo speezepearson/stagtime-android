@@ -25,12 +25,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat.getSystemService
 import com.example.stagtime.ui.theme.StagTimeTheme
 import com.google.gson.Gson
-import java.security.MessageDigest
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.max
+
 
 fun formatInstant(t: Instant): String {
     return DateTimeFormatter
@@ -153,13 +153,17 @@ class MainActivity : ComponentActivity() {
 object Schedule {
     private const val RARITY = 3600L
     private fun pseudorandomPredicate(input: Long): Boolean {
-        val bytes = input.toString().toByteArray()
-        val sha256 = MessageDigest.getInstance("SHA-256")
-        val hash = sha256.digest(bytes)
+        // Cribbed from https://stackoverflow.com/a/24771093
+        var x = input
+        x *= 1664525
+        x += 1013904223
+        x = x xor (x ushr 12)
+        x = x xor (x shl 25)
+        x = x xor (x ushr 27)
+        x *= 1103515245
+        x += 12345
 
-        val hashPartAsLong =
-            hash.copyOfRange(0, 8).fold(0L) { acc, byte -> (acc shl 8) or (byte.toLong() and 0xFF) }
-        return hashPartAsLong % RARITY == 0L
+        return x % RARITY == 0L
     }
 
     fun lastBefore(t: Instant): Instant {
