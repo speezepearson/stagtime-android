@@ -209,7 +209,7 @@ object NotificationScheduler {
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
             )
-            .setSmallIcon(R.drawable.ic_launcher_background)
+            .setSmallIcon(R.drawable.baseline_punch_clock_24)
             .setChannelId("NOTIFICATION_CHANNEL_ID")
             .build()
     }
