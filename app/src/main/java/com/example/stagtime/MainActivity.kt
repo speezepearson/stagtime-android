@@ -90,6 +90,16 @@ class MainActivity : ComponentActivity() {
             adapter.notifyDataSetChanged()
         }
 
+        val refreshButton = findViewById<Button>(R.id.button_refresh)
+        refreshButton.setOnClickListener {
+            var nextPing = Schedule.firstAfter(nearbyPingTimes.first())
+            while (nextPing.isBefore(Instant.now())) {
+                nearbyPingTimes.add(0, nextPing)
+                nextPing = Schedule.firstAfter(nearbyPingTimes.first())
+            }
+            adapter.notifyDataSetChanged()
+        }
+
         val channel = NotificationChannel(
             "NOTIFICATION_CHANNEL_ID",
             "Notification Channel",
