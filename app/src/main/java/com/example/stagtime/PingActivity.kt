@@ -59,7 +59,7 @@ class PingActivity : Activity() {
         (getTags(this).union(pingInfo.tags)).sorted().forEach { tag ->
             val button = Button(this)
             button.text = tag
-            button.textSize = 12f
+            button.textSize = 18f
             button.setPadding(20, 20, 20, 20)
             button.minWidth = 0
             button.minHeight = 0
