@@ -5,7 +5,6 @@ import android.content.Context
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
-import java.time.Instant
 
 fun getTags(context: Context): Set<String> {
     val sharedPreferences = context.getSharedPreferences("TagList", Context.MODE_PRIVATE)
@@ -35,7 +34,10 @@ class EditTagsActivity : Activity() {
 
         val sharedPreferences = getSharedPreferences("TagList", Context.MODE_PRIVATE)
         with(sharedPreferences.edit()) {
-            putStringSet("TagList", userInput.split(",").map { s -> s.trim() }.filter { s -> s.isNotEmpty() }.toSet())
+            putStringSet(
+                "TagList",
+                userInput.split(",").map { s -> s.trim() }.filter { s -> s.isNotEmpty() }.toSet()
+            )
             apply()
         }
     }

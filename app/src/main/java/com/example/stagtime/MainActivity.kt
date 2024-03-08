@@ -14,7 +14,6 @@ import android.os.Bundle
 import android.os.SystemClock
 import android.provider.MediaStore
 import android.util.Log
-import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.ListView
 import android.widget.Toast
@@ -27,7 +26,6 @@ import androidx.core.content.ContextCompat.getSystemService
 import com.example.stagtime.ui.theme.StagTimeTheme
 import com.google.gson.Gson
 import java.security.MessageDigest
-import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter

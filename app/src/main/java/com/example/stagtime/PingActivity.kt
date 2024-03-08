@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import android.widget.EditText
-import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -33,9 +32,12 @@ class PingActivity : Activity() {
         val textView = findViewById<TextView>(R.id.text_view_ping_time)
         textView.text = formatInstant(ping)
 
-        val prevJson = getSharedPreferences("PingData", Context.MODE_PRIVATE).getString(ping.toString(), null)
+        val prevJson =
+            getSharedPreferences("PingData", Context.MODE_PRIVATE).getString(ping.toString(), null)
         Log.d("SRP", "prevJson: " + prevJson)
-        pingInfo = if (prevJson == null) { PingInfo() } else {
+        pingInfo = if (prevJson == null) {
+            PingInfo()
+        } else {
             Gson().fromJson(prevJson, PingInfo::class.java)
         }
 
@@ -58,14 +60,14 @@ class PingActivity : Activity() {
             val button = Button(this)
             button.text = tag
             button.textSize = 12f
-            button.setPadding(0,0,0,0)
+            button.setPadding(0, 0, 0, 0)
             button.minWidth = 0
             button.minHeight = 0
             button.layoutParams = FlexboxLayout.LayoutParams(
                 FlexboxLayout.LayoutParams.WRAP_CONTENT,
                 FlexboxLayout.LayoutParams.WRAP_CONTENT
             ).apply {
-                setMargins(0, 0, 0, 0) // Set margins to ensure buttons are not too close to each other
+                setMargins(0, 0, 0, 0)
             }
 
 
