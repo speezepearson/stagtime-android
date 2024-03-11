@@ -27,7 +27,7 @@
         app:alignItems="flex_start"
         app:flexDirection="row"
         app:flexWrap="wrap"
-        app:justifyContent="flex_start"></com.google.android.flexbox.FlexboxLayout>
+        app:justifyContent="flex_start" />
 
     <EditText
         android:id="@+id/edit_text_user_input"
