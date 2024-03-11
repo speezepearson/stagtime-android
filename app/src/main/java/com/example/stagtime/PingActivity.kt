@@ -98,16 +98,16 @@ class PingActivity : Activity() {
             finish()
         }
 
-        val newTagField = findViewById<EditText>(R.id.edit_text_new_tag)
-        val addTagButton = findViewById<Button>(R.id.button_add_tag)
-        addTagButton.setOnClickListener {
-            val newTag = newTagField.text.toString()
-            if (newTag.isNotBlank()) {
+        val newTagsField = findViewById<EditText>(R.id.edit_text_new_tag)
+        val addTagsButton = findViewById<Button>(R.id.button_add_tag)
+        addTagsButton.setOnClickListener {
+            val newTags = newTagsField.text.split(",").map { it.trim() }.filter { it.isNotBlank() }
+            for (newTag in newTags) {
                 ensureTagExists(this, newTag)
-                pingInfo.tags += newTag
-                createFlagButtons()
-                newTagField.text.clear()
             }
+            pingInfo.tags += newTags
+            createFlagButtons()
+            newTagsField.text.clear()
         }
 
         val userInput = findViewById<EditText>(R.id.edit_text_user_input)
