@@ -12,12 +12,30 @@
         android:layout_height="wrap_content"
         android:drawableStart="@drawable/baseline_arrow_back_24" />
 
-    <TextView
-        android:id="@+id/text_view_ping_time"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:textSize="24sp" />
+        android:orientation="horizontal">
+        <Button
+            android:id="@+id/button_prev_ping"
+            android:minWidth="0dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawableStart="@drawable/baseline_arrow_left_24" />
+        <TextView
+            android:id="@+id/text_view_ping_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:textSize="24sp" />
+        <Button
+            android:id="@+id/button_next_ping"
+            android:minWidth="0dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawableStart="@drawable/baseline_arrow_right_24" />
+
+    </LinearLayout>
 
     <com.google.android.flexbox.FlexboxLayout
         android:id="@+id/tags_container"

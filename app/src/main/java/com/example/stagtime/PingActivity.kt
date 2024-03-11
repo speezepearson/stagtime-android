@@ -79,6 +79,25 @@ class PingActivity : Activity() {
             finish()
         }
 
+        val prevPingButton = findViewById<Button>(R.id.button_prev_ping)
+        prevPingButton.setOnClickListener {
+            val startNextPing = Intent(this, PingActivity::class.java)
+            startNextPing.putExtra("PING_EPOCHSEC", Schedule.lastBefore(ping).epochSecond)
+            startActivity(startNextPing)
+            finish()
+        }
+
+        val nextPingButton = findViewById<Button>(R.id.button_next_ping)
+        if (Schedule.firstAfter(ping) > Instant.now()) {
+            nextPingButton.isEnabled = false
+        }
+        nextPingButton.setOnClickListener {
+            val startNextPing = Intent(this, PingActivity::class.java)
+            startNextPing.putExtra("PING_EPOCHSEC", Schedule.firstAfter(ping).epochSecond)
+            startActivity(startNextPing)
+            finish()
+        }
+
         val newTagField = findViewById<EditText>(R.id.edit_text_new_tag)
         val addTagButton = findViewById<Button>(R.id.button_add_tag)
         addTagButton.setOnClickListener {
