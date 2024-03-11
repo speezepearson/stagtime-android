@@ -238,44 +238,14 @@ object NotificationScheduler {
         scheduleNotification(context, t)
     }
 
-    private fun getNotification(context: Context, t: Instant): Notification {
-        val pingIntent = Intent(context, PingActivity::class.java).apply {
-            putExtra("PING_EPOCHSEC", t.epochSecond)
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
-        return Notification.Builder(context, "NOTIFICATION_CHANNEL_ID")
-            .setContentTitle("Random Notification")
-            .setContentText("Ping for ${formatInstant(t)}")
-            .setContentIntent(
-                PendingIntent.getActivity(
-                    context,
-                    0,
-                    pingIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                )
-            )
-            .setSmallIcon(R.drawable.baseline_punch_clock_24)
-            .setChannelId("NOTIFICATION_CHANNEL_ID")
-            .build()
-    }
 
     private fun scheduleNotification(context: Context, t: Instant) {
         val notificationIntent = Intent(context, NotificationPublisher::class.java).apply {
-            putExtra(NotificationPublisher.NOTIFICATION_ID, 1)
             putExtra(NotificationPublisher.PING_EPOCHSEC, t.epochSecond)
-            putExtra(
-                NotificationPublisher.NOTIFICATION,
-                getNotification(context, t)
-            )
         }
 
-        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        } else {
-            PendingIntent.FLAG_UPDATE_CURRENT
-        }
-
-        val pendingIntent = PendingIntent.getBroadcast(context, 0, notificationIntent, flags)
+        val pendingIntent = PendingIntent.getBroadcast(context, 0, notificationIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
         val alarmManager = getSystemService(context, AlarmManager::class.java)
         if (!alarmManager!!.canScheduleExactAlarms()) {
@@ -306,20 +276,38 @@ object NotificationScheduler {
 class NotificationPublisher : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        Log.d("SRP", "in onReceive")
+        Log.d("SRP", "in NotificationPublisher.onReceive")
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val notification = intent.getParcelableExtra(NOTIFICATION, Notification::class.java)!!
-        val id = intent.getIntExtra(NOTIFICATION_ID, 0)
-        notificationManager.notify(id, notification)
-
-        // Schedule the next notification
+        val ping = Instant.ofEpochSecond(intent.getLongExtra(PING_EPOCHSEC, 0))
+        val notification = buildNotification(context, ping)
+        notificationManager.notify(5824598, notification)
         NotificationScheduler.scheduleNextNotification(context)
     }
 
+    private fun buildNotification(context: Context, t: Instant): Notification {
+        val pingIntent = Intent(context, PingActivity::class.java).apply {
+            putExtra("PING_EPOCHSEC", t.epochSecond)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        return Notification.Builder(context, "NOTIFICATION_CHANNEL_ID")
+            .setContentTitle("Random Notification")
+            .setContentText("Ping for ${formatInstant(t)}")
+            .setContentIntent(
+                PendingIntent.getActivity(
+                    context,
+                    0,
+                    pingIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+            )
+            .setSmallIcon(R.drawable.baseline_punch_clock_24)
+            .setChannelId("NOTIFICATION_CHANNEL_ID")
+            .build()
+    }
+
+
     companion object {
-        const val NOTIFICATION_ID = "notification-id"
-        const val NOTIFICATION = "notification"
         const val PING_EPOCHSEC = "ping-epochsec"
     }
 }
