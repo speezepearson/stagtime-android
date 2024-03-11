@@ -65,6 +65,17 @@
             android:text="Add tag(s)" />
     </LinearLayout>
 
+    <com.google.android.flexbox.FlexboxLayout
+        android:id="@+id/tags_search_results_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:alignContent="flex_start"
+        app:alignItems="flex_start"
+        app:flexDirection="row"
+        app:flexWrap="wrap"
+        app:justifyContent="flex_start" />
+
+
     <EditText
         android:id="@+id/edit_text_user_input"
         android:layout_width="match_parent"

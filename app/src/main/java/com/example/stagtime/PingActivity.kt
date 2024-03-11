@@ -9,6 +9,7 @@ import android.widget.EditText
 import android.widget.TextView
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.core.widget.addTextChangedListener
 import com.google.android.flexbox.FlexboxLayout
 import com.google.gson.Gson
 import java.time.Instant
@@ -70,7 +71,7 @@ class PingActivity : Activity() {
 
         pingInfo = loadPingDataForTime(this, ping) ?: PingInfo()
 
-        createFlagButtons()
+        redraw()
 
         val backButton = findViewById<Button>(R.id.button_back)
         backButton.setOnClickListener {
@@ -99,6 +100,9 @@ class PingActivity : Activity() {
         }
 
         val newTagsField = findViewById<EditText>(R.id.edit_text_new_tag)
+        newTagsField.addTextChangedListener { redraw() }
+        newTagsField.requestFocus()
+
         val addTagsButton = findViewById<Button>(R.id.button_add_tag)
         addTagsButton.setOnClickListener {
             val newTags = newTagsField.text.split(",").map { it.trim() }.filter { it.isNotBlank() }
@@ -106,19 +110,33 @@ class PingActivity : Activity() {
                 ensureTagExists(this, newTag)
             }
             pingInfo.tags += newTags
-            createFlagButtons()
             newTagsField.text.clear()
+            redraw()
         }
 
         val userInput = findViewById<EditText>(R.id.edit_text_user_input)
         userInput.setText(pingInfo.notes)
     }
 
-    private fun createFlagButtons() {
-        val layout = findViewById<FlexboxLayout>(R.id.tags_container)
-        layout.removeAllViews() // Clear existing views if any
+    private fun redraw() {
+        val buttonContainer = findViewById<FlexboxLayout>(R.id.tags_container)
+        createFlagButtons(buttonContainer, getTags(this).keys.toSet().union(pingInfo.tags))
 
-        (getTags(this).keys.toSet().union(pingInfo.tags)).sorted().forEach { tag ->
+        val newTagsField = findViewById<EditText>(R.id.edit_text_new_tag)
+        val searchResultsContainer = findViewById<FlexboxLayout>(R.id.tags_search_results_container)
+        val queries =
+            newTagsField.text.split(",").map { it.trim() }.filter { it.isNotBlank() }.toSet()
+        createFlagButtons(searchResultsContainer,
+            getTags(this).keys.toSet().union(pingInfo.tags)
+                .filter { tag -> queries.any { tag.lowercase().startsWith(it.lowercase()) } }
+                .toSet()
+        )
+    }
+
+    private fun createFlagButtons(container: FlexboxLayout, tags: Set<String>) {
+        container.removeAllViews() // Clear existing views if any
+
+        tags.sorted().forEach { tag ->
             val button = Button(this)
             button.text = tag
             button.textSize = 18f
@@ -134,24 +152,19 @@ class PingActivity : Activity() {
                 setMargins(2, 2, 2, 2)
             }
 
-
-            updateButtonColor(tag, button)
-            button.setOnClickListener { toggleTag(tag, button) }
-            layout.addView(button)
+            button.setBackgroundColor(if (pingInfo.tags.contains(tag)) Color.Green.toArgb() else Color.White.toArgb())
+            button.setOnClickListener { toggleTag(tag) }
+            container.addView(button)
         }
     }
 
-    private fun toggleTag(tag: String, button: Button) {
+    private fun toggleTag(tag: String) {
         if (pingInfo.tags.contains(tag)) {
             pingInfo.tags -= tag
         } else {
             pingInfo.tags += tag
         }
-        updateButtonColor(tag, button)
-    }
-
-    private fun updateButtonColor(tag: String, button: Button) {
-        button.setBackgroundColor(if (pingInfo.tags.contains(tag)) Color.Green.toArgb() else Color.White.toArgb())
+        redraw()
     }
 
     private fun savePingInfo() {
