@@ -48,7 +48,7 @@ fun loadAllPingData(context: Context): Map<Instant, PingInfo> {
 
 fun clearAllPingData(context: Context) {
     val prefs = context.getSharedPreferences("PingData", Context.MODE_PRIVATE)
-    with (prefs.edit()) {
+    with(prefs.edit()) {
         clear()
         apply()
     }
