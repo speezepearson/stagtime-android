@@ -10,11 +10,24 @@
         android:layout_height="wrap_content"
         android:text="Export Notes" />
 
-    <Button
-        android:id="@+id/button_edit_tags"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Edit Tags" />
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/button_edit_tags"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Edit Tags" />
+
+        <Button
+            android:id="@+id/button_test_notification"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Test Notification" />
+
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="wrap_content"

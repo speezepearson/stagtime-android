@@ -1,5 +1,6 @@
 package com.example.stagtime
 
+import android.Manifest
 import android.app.AlarmManager
 import android.app.Notification
 import android.app.NotificationChannel
@@ -9,6 +10,7 @@ import android.content.BroadcastReceiver
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
@@ -22,6 +24,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat.getSystemService
 import com.example.stagtime.ui.theme.StagTimeTheme
 import com.google.gson.Gson
@@ -69,6 +74,34 @@ class MainActivity : ComponentActivity() {
             val filename = "ping_notes.${Instant.now()}.json"
             saveToFile(filename, jsonBlob)
             Log.d("SRP", jsonBlob)
+        }
+
+        val testNotificationButton = findViewById<Button>(R.id.button_test_notification)
+        testNotificationButton.setOnClickListener {
+            val builder = NotificationCompat.Builder(this, "NOTIFICATION_CHANNEL_ID")
+                .setSmallIcon(R.drawable.baseline_punch_clock_24)
+                .setContentTitle("Test notification")
+                .setContentText("at ${Instant.now()}")
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+
+            if (ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    493456
+                )
+                Toast.makeText(
+                    this,
+                    "Give me notification-permissions and try again!",
+                    Toast.LENGTH_SHORT
+                )
+                    .show()
+            }
+            NotificationManagerCompat.from(this).notify(493456, builder.build())
         }
 
         val editTagsButton = findViewById<Button>(R.id.button_edit_tags)
