@@ -34,10 +34,12 @@ import kotlin.math.max
 object RequestCodes {
     const val SCHEDULE_EXACT_ALARM = 493457
 }
+
 object NotificationIds {
     const val PING = 5824598
     const val TEST = 5824599
 }
+
 object PendingIntentIds {
     const val SCHEDULE_NEXT_PING = 32593953
     const val OPEN_PING = 32593954
