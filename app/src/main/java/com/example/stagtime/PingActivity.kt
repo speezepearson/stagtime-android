@@ -2,6 +2,7 @@ package com.example.stagtime
 
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
@@ -73,7 +74,9 @@ class PingActivity : Activity() {
 
         val backButton = findViewById<Button>(R.id.button_back)
         backButton.setOnClickListener {
-            finish()  // Closes the current activity and goes back to the previous one
+            val startMain = Intent(this, MainActivity::class.java)
+            startActivity(startMain)
+            finish()
         }
 
         val userInput = findViewById<EditText>(R.id.edit_text_user_input)
