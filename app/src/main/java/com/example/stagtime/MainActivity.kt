@@ -87,6 +87,22 @@ class MainActivity : ComponentActivity() {
             if (ActivityCompat.checkSelfPermission(
                     this,
                     Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED) {
+                val alarmManager = getSystemService(this, AlarmManager::class.java)
+                if (!alarmManager!!.canScheduleExactAlarms()) {
+                    Toast.makeText(this, "Can't schedule exact alarms :(", Toast.LENGTH_SHORT).show()
+                    Log.d("SRP", "Can't schedule exact alarms :(")
+                }
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.SCHEDULE_EXACT_ALARM),
+                    493457
+                )
+            }
+
+            if (ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
                 ActivityCompat.requestPermissions(
@@ -261,14 +277,26 @@ object NotificationScheduler {
 
         val pendingIntent = PendingIntent.getBroadcast(context, 0, notificationIntent, flags)
 
-        val millisUntilPing = max(1, t.toEpochMilli() - Instant.now().toEpochMilli())
-        val futureInMillis = SystemClock.elapsedRealtime() + millisUntilPing
         val alarmManager = getSystemService(context, AlarmManager::class.java)
-        Log.d(
-            "SRP",
-            "scheduling notif: cur boot millis ${SystemClock.elapsedRealtime()}, waiting $millisUntilPing ms"
+        if (!alarmManager!!.canScheduleExactAlarms()) {
+
+            Toast.makeText(context, "Can't schedule exact alarms :( ${ActivityCompat.checkSelfPermission(context, Manifest.permission.SCHEDULE_EXACT_ALARM)} ${PackageManager.PERMISSION_GRANTED}", Toast.LENGTH_SHORT).show()
+            Log.d("SRP", "Can't schedule exact alarms :( ${ActivityCompat.checkSelfPermission(context, Manifest.permission.SCHEDULE_EXACT_ALARM)} ${PackageManager.PERMISSION_GRANTED}")
+            // ask for android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM
+            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.SCHEDULE_EXACT_ALARM) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(
+                    context as MainActivity,
+                    arrayOf(Manifest.permission.SCHEDULE_EXACT_ALARM),
+                    493457
+                )
+            }
+            return
+        }
+        alarmManager.setExactAndAllowWhileIdle(
+            AlarmManager.RTC_WAKEUP,
+            max(t.toEpochMilli(), SystemClock.elapsedRealtime()),
+            pendingIntent
         )
-        alarmManager?.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, futureInMillis, pendingIntent)
         Log.d("SRP", "scheduled notif")
     }
 
@@ -281,7 +309,7 @@ class NotificationPublisher : BroadcastReceiver() {
         Log.d("SRP", "in onReceive")
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val notification: Notification = intent.getParcelableExtra(NOTIFICATION)!!
+        val notification = intent.getParcelableExtra(NOTIFICATION, Notification::class.java)!!
         val id = intent.getIntExtra(NOTIFICATION_ID, 0)
         notificationManager.notify(id, notification)
 
