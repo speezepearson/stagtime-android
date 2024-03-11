@@ -31,6 +31,19 @@ import java.util.Locale
 import kotlin.math.max
 
 
+object RequestCodes {
+    const val SCHEDULE_EXACT_ALARM = 493457
+}
+object NotificationIds {
+    const val PING = 5824598
+    const val TEST = 5824599
+}
+object PendingIntentIds {
+    const val SCHEDULE_NEXT_PING = 32593953
+    const val OPEN_PING = 32593954
+}
+
+
 fun formatInstant(t: Instant): String {
     return DateTimeFormatter
         .ofPattern("uuuu-MM-dd HH:mm:ss")
@@ -210,7 +223,7 @@ object NotificationScheduler {
     fun scheduleExact(context: Context, t: Instant, intent: Intent): Boolean {
 
         val pendingIntent = PendingIntent.getBroadcast(
-            context, 0, intent,
+            context, PendingIntentIds.SCHEDULE_NEXT_PING, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
@@ -225,7 +238,7 @@ object NotificationScheduler {
                 ActivityCompat.requestPermissions(
                     context as MainActivity,
                     arrayOf(Manifest.permission.SCHEDULE_EXACT_ALARM),
-                    493457
+                    RequestCodes.SCHEDULE_EXACT_ALARM
                 )
             }
 
@@ -270,7 +283,7 @@ class NotificationPublisher : BroadcastReceiver() {
         NotificationScheduler.ensureNextPingScheduled(context)
         if (intent.getBooleanExtra(IS_TEST, false)) {
             showNotification(
-                context, 5824599,
+                context, NotificationIds.TEST,
                 Notification.Builder(context, "NOTIFICATION_CHANNEL_ID")
                     .setContentTitle("Test Notification")
                     .setContentText("Hello from StagTime!")
@@ -284,7 +297,7 @@ class NotificationPublisher : BroadcastReceiver() {
 
         NotificationScheduler.ensureNextPingScheduled(context)
         val ping = Instant.ofEpochSecond(intent.getLongExtra(PING_EPOCHSEC, 0))
-        showNotification(context, 5824598, buildNotification(context, ping))
+        showNotification(context, NotificationIds.PING, buildNotification(context, ping))
     }
 
     private fun showNotification(context: Context, id: Int, notification: Notification) {
@@ -318,7 +331,7 @@ class NotificationPublisher : BroadcastReceiver() {
             .setContentIntent(
                 PendingIntent.getActivity(
                     context,
-                    0,
+                    PendingIntentIds.OPEN_PING,
                     pingIntent,
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
