@@ -1,6 +1,7 @@
 package com.example.stagtime
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.AlarmManager
 import android.app.Notification
 import android.app.NotificationChannel
@@ -20,15 +21,8 @@ import android.widget.Button
 import android.widget.ListView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.app.ActivityCompat
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat.getSystemService
-import com.example.stagtime.ui.theme.StagTimeTheme
 import com.google.gson.Gson
 import java.time.Instant
 import java.time.ZoneId
@@ -78,46 +72,20 @@ class MainActivity : ComponentActivity() {
 
         val testNotificationButton = findViewById<Button>(R.id.button_test_notification)
         testNotificationButton.setOnClickListener {
-            val builder = NotificationCompat.Builder(this, "NOTIFICATION_CHANNEL_ID")
-                .setSmallIcon(R.drawable.baseline_punch_clock_24)
-                .setContentTitle("Test notification")
-                .setContentText("at ${Instant.now()}")
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-
-            if (ActivityCompat.checkSelfPermission(
+            if (NotificationScheduler.scheduleExact(
                     this,
-                    Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED) {
-                val alarmManager = getSystemService(this, AlarmManager::class.java)
-                if (!alarmManager!!.canScheduleExactAlarms()) {
-                    Toast.makeText(this, "Can't schedule exact alarms :(", Toast.LENGTH_SHORT).show()
-                    Log.d("SRP", "Can't schedule exact alarms :(")
-                }
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(Manifest.permission.SCHEDULE_EXACT_ALARM),
-                    493457
+                    Instant.now().plusSeconds(1),
+                    Intent(this, NotificationPublisher::class.java).apply {
+                        putExtra(NotificationPublisher.IS_TEST, true)
+                    }
                 )
-            }
-
-            if (ActivityCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED
             ) {
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                    493456
-                )
                 Toast.makeText(
                     this,
-                    "Give me notification-permissions and try again!",
+                    "Test notification scheduled for 1s from now",
                     Toast.LENGTH_SHORT
-                )
-                    .show()
+                ).show()
             }
-            NotificationManagerCompat.from(this).notify(493456, builder.build())
         }
 
         val editTagsButton = findViewById<Button>(R.id.button_edit_tags)
@@ -155,7 +123,7 @@ class MainActivity : ComponentActivity() {
             getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.createNotificationChannel(channel)
 
-        NotificationScheduler.scheduleNextNotification(this)
+        NotificationScheduler.ensureNextPingScheduled(this)
 
     }
 
@@ -232,41 +200,63 @@ object Schedule {
 
 object NotificationScheduler {
 
-    fun scheduleNextNotification(context: Context) {
+    fun ensureNextPingScheduled(context: Context) {
         val t = Schedule.firstAfter(Instant.now())
         Log.d("SRP", "scheduling for $t (currently ${Instant.now()})")
         scheduleNotification(context, t)
     }
 
+    @SuppressLint("BatteryLife")
+    fun scheduleExact(context: Context, t: Instant, intent: Intent): Boolean {
 
-    private fun scheduleNotification(context: Context, t: Instant) {
-        val notificationIntent = Intent(context, NotificationPublisher::class.java).apply {
-            putExtra(NotificationPublisher.PING_EPOCHSEC, t.epochSecond)
-        }
-
-        val pendingIntent = PendingIntent.getBroadcast(context, 0, notificationIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val pendingIntent = PendingIntent.getBroadcast(
+            context, 0, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
 
         val alarmManager = getSystemService(context, AlarmManager::class.java)
         if (!alarmManager!!.canScheduleExactAlarms()) {
-
-            Toast.makeText(context, "Can't schedule exact alarms :( ${ActivityCompat.checkSelfPermission(context, Manifest.permission.SCHEDULE_EXACT_ALARM)} ${PackageManager.PERMISSION_GRANTED}", Toast.LENGTH_SHORT).show()
-            Log.d("SRP", "Can't schedule exact alarms :( ${ActivityCompat.checkSelfPermission(context, Manifest.permission.SCHEDULE_EXACT_ALARM)} ${PackageManager.PERMISSION_GRANTED}")
-            // ask for android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM
-            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.SCHEDULE_EXACT_ALARM) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.SCHEDULE_EXACT_ALARM
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                Log.d("SRP", "requesting SCHEDULE_EXACT_ALARM")
                 ActivityCompat.requestPermissions(
                     context as MainActivity,
                     arrayOf(Manifest.permission.SCHEDULE_EXACT_ALARM),
                     493457
                 )
             }
-            return
+
+            if (ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                Toast.makeText(
+                    context,
+                    "Turn off battery optimization in app settings!",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+
+            return false
         }
         alarmManager.setExactAndAllowWhileIdle(
             AlarmManager.RTC_WAKEUP,
             max(t.toEpochMilli(), SystemClock.elapsedRealtime()),
             pendingIntent
         )
+        return true
+    }
+
+    private fun scheduleNotification(context: Context, t: Instant) {
+        val notificationIntent = Intent(context, NotificationPublisher::class.java).apply {
+            putExtra(NotificationPublisher.PING_EPOCHSEC, t.epochSecond)
+        }
+
+        scheduleExact(context, t, notificationIntent)
         Log.d("SRP", "scheduled notif")
     }
 
@@ -277,12 +267,44 @@ class NotificationPublisher : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         Log.d("SRP", "in NotificationPublisher.onReceive")
+        NotificationScheduler.ensureNextPingScheduled(context)
+        if (intent.getBooleanExtra(IS_TEST, false)) {
+            showNotification(
+                context, 5824599,
+                Notification.Builder(context, "NOTIFICATION_CHANNEL_ID")
+                    .setContentTitle("Test Notification")
+                    .setContentText("Hello from StagTime!")
+                    .setSmallIcon(R.drawable.baseline_punch_clock_24)
+                    .setChannelId("NOTIFICATION_CHANNEL_ID")
+                    .setAutoCancel(true)
+                    .build()
+            )
+            return
+        }
+
+        NotificationScheduler.ensureNextPingScheduled(context)
+        val ping = Instant.ofEpochSecond(intent.getLongExtra(PING_EPOCHSEC, 0))
+        showNotification(context, 5824598, buildNotification(context, ping))
+    }
+
+    private fun showNotification(context: Context, id: Int, notification: Notification) {
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val ping = Instant.ofEpochSecond(intent.getLongExtra(PING_EPOCHSEC, 0))
-        val notification = buildNotification(context, ping)
-        notificationManager.notify(5824598, notification)
-        NotificationScheduler.scheduleNextNotification(context)
+
+        if (!notificationManager.areNotificationsEnabled()) {
+            Log.d("SRP", "no notification permissions")
+            val askIntent = Intent().apply {
+                action = "android.settings.APP_NOTIFICATION_SETTINGS"
+                putExtra("android.provider.extra.APP_PACKAGE", context.packageName)
+                putExtra("app_package", context.packageName)
+                putExtra("app_uid", context.applicationInfo.uid)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            context.startActivity(askIntent)
+            return
+        }
+
+        notificationManager.notify(id, notification)
     }
 
     private fun buildNotification(context: Context, t: Instant): Notification {
@@ -303,28 +325,22 @@ class NotificationPublisher : BroadcastReceiver() {
             )
             .setSmallIcon(R.drawable.baseline_punch_clock_24)
             .setChannelId("NOTIFICATION_CHANNEL_ID")
+            .setAutoCancel(true)
             .build()
     }
 
 
     companion object {
         const val PING_EPOCHSEC = "ping-epochsec"
+        const val IS_TEST = "is-test"
     }
 }
 
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello! $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    StagTimeTheme {
-        Greeting("Android")
+class BootCompletedReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action == "android.intent.action.BOOT_COMPLETED") {
+            Log.d("SRP", "boot completed")
+            NotificationScheduler.ensureNextPingScheduled(context)
+        }
     }
 }
