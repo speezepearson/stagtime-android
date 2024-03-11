@@ -70,8 +70,8 @@ class MainActivity : ComponentActivity() {
 
         val exportButton = findViewById<Button>(R.id.button_export)
         exportButton.setOnClickListener {
-            val jsonBlob = exportPingNotesAsJson()
-            val filename = "ping_notes.${Instant.now()}.json"
+            val jsonBlob = buildJsonExport()
+            val filename = "stagtime-${Instant.now()}.json"
             saveToFile(filename, jsonBlob)
             Log.d("SRP", jsonBlob)
         }
@@ -166,8 +166,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun exportPingNotesAsJson(): String {
-        val res = Gson().toJson(loadAllPingData(this))
+    private fun buildJsonExport(): String {
+        val res = Gson().toJson(
+            mapOf(
+                "pings" to loadAllPingData(this),
+                "tags" to getTags(this),
+            )
+        )
         Log.d("SRP", "exporting: " + res.toString())
         return res
     }

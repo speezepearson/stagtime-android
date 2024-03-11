@@ -29,6 +29,24 @@
         app:flexWrap="wrap"
         app:justifyContent="flex_start" />
 
+    <!--  text field and button to add new tag  -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <EditText
+            android:id="@+id/edit_text_new_tag"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="New Tag" />
+        <Button
+            android:id="@+id/button_add_tag"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Add" />
+    </LinearLayout>
+
     <EditText
         android:id="@+id/edit_text_user_input"
         android:layout_width="match_parent"
