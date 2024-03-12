@@ -205,7 +205,7 @@ class WeakPRNG(private var seed: Long) {
             k++
             p *= random()
         }
-        Log.d("SRP", "poisson($mean) = ${k - 1}; L=$l; p=${p}")
+//        Log.d("SRP", "poisson($mean) = ${k - 1}; L=$l; p=${p}")
         return k - 1
     }
 }
