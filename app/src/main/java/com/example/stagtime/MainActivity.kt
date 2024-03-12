@@ -28,7 +28,9 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlin.math.exp
 import kotlin.math.max
+import kotlin.math.pow
 
 
 object RequestCodes {
@@ -60,10 +62,8 @@ class MainActivity : ComponentActivity() {
 //        clearAllPingData(this)
         Log.d("SRP", "in onCreate")
 
-        val nearbyPingTimes = mutableListOf(Schedule.lastBefore(Instant.now()))
-        for (x in 1..5) {
-            nearbyPingTimes.add(Schedule.lastBefore(nearbyPingTimes.last()))
-        }
+        val nearbyPingTimes =
+            Schedule.before(Instant.now(), 24).toMutableList().apply { sortDescending() }
 
         setContentView(R.layout.activity_main)
 
@@ -111,9 +111,7 @@ class MainActivity : ComponentActivity() {
 
         val loadPrevButton = findViewById<Button>(R.id.button_load_more)
         loadPrevButton.setOnClickListener {
-            for (x in 1..5) {
-                nearbyPingTimes.add(Schedule.lastBefore(nearbyPingTimes.last()))
-            }
+            nearbyPingTimes.addAll(Schedule.before(nearbyPingTimes.last(), 24).sortedDescending())
             adapter.notifyDataSetChanged()
         }
 
@@ -178,38 +176,82 @@ class MainActivity : ComponentActivity() {
 
 }
 
-object Schedule {
-    private const val RARITY = 3600L
-    private fun pseudorandomPredicate(input: Long): Boolean {
-        // Cribbed from https://stackoverflow.com/a/24771093
-        var x = input
-        x *= 1664525
-        x += 1013904223
-        x = x xor (x ushr 12)
-        x = x xor (x shl 25)
-        x = x xor (x ushr 27)
-        x *= 1103515245
-        x += 12345
 
-        return x % RARITY == 0L
+class WeakPRNG(private var seed: Long) {
+    init {
+        seed *= 1664525
+        seed += 1013904223
+        seed = seed xor (seed ushr 12)
+        seed = seed xor (seed shl 25)
+        seed = seed xor (seed ushr 27)
+        seed *= 1103515245
+        seed += 12345
+    }
+
+    fun random(): Double {
+        val a = 1664525L
+        val c = 1013904223L
+        val m = 2.0.pow(32).toLong()
+        seed = ((a * seed + c) % m)
+        if (seed < 0) seed += m
+        return seed.toDouble() / m
+    }
+
+    fun poisson(mean: Double): Int {
+        val l = exp(-mean)
+        var k = 0
+        var p = 1.0
+        while (p > l) {
+            k++
+            p *= random()
+        }
+        Log.d("SRP", "poisson($mean) = ${k - 1}; L=$l; p=${p}")
+        return k - 1
+    }
+}
+
+
+object Schedule {
+    private fun pingsOnDayStartingAt(midnightSec: Long): List<Instant> {
+        val prng = WeakPRNG(midnightSec)
+        val numPings = prng.poisson(24.0)
+        val pings = mutableListOf<Instant>()
+        for (i in 0 until numPings) {
+            pings.add(Instant.ofEpochMilli(midnightSec * 1000 + (prng.random() * 86400_000).toLong()))
+        }
+        Log.d(
+            "SRP",
+            "$numPings pings: pingsOnDayStartingAt(${Instant.ofEpochSecond(midnightSec)}) = $pings"
+        )
+        return pings.sorted()
     }
 
     fun lastBefore(t: Instant): Instant {
-        val nowSec = t.epochSecond
-        var sec = nowSec - 1
-        while (!pseudorandomPredicate(sec)) {
-            sec -= 1
-        }
-        return Instant.ofEpochSecond(sec)
+        return before(t, 1).first()
     }
 
     fun firstAfter(t: Instant): Instant {
-        val nowSec = t.epochSecond
-        var sec = nowSec + 1
-        while (!pseudorandomPredicate(sec)) {
-            sec += 1
+        return after(t, 1).first()
+    }
+
+    fun before(t: Instant, n: Int): List<Instant> {
+        var midnightSec = t.epochSecond / 86400 * 86400
+        val result = pingsOnDayStartingAt(midnightSec).filter { it.isBefore(t) }.toMutableList()
+        while (result.size < n) {
+            midnightSec -= 86400
+            result.addAll(pingsOnDayStartingAt(midnightSec))
         }
-        return Instant.ofEpochSecond(sec)
+        return result.sortedDescending().take(n).reversed()
+    }
+
+    fun after(t: Instant, n: Int): List<Instant> {
+        var midnightSec = t.epochSecond / 86400 * 86400
+        val result = pingsOnDayStartingAt(midnightSec).filter { it.isAfter(t) }.toMutableList()
+        while (result.size < n) {
+            midnightSec += 86400
+            result.addAll(pingsOnDayStartingAt(midnightSec))
+        }
+        return result.sorted().take(n)
     }
 }
 
