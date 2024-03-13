@@ -128,7 +128,7 @@ class PingActivity : Activity() {
     private fun createFlagButtons(container: FlexboxLayout, tags: Set<String>) {
         container.removeAllViews() // Clear existing views if any
 
-        tags.sorted().forEach { tag ->
+        tags.sortedBy { it.lowercase() }.forEach { tag ->
             val button = Button(this)
             button.text = tag
             button.textSize = 18f
