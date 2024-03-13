@@ -298,7 +298,7 @@ object NotificationScheduler {
         }
         alarmManager.setExactAndAllowWhileIdle(
             AlarmManager.RTC_WAKEUP,
-            max(t.toEpochMilli(), SystemClock.elapsedRealtime()),
+            max(t.toEpochMilli(), SystemClock.elapsedRealtime() + 1000),
             pendingIntent
         )
         return true
