@@ -165,7 +165,7 @@ class MainActivity : ComponentActivity() {
                 "tags" to getTags(this),
             )
         )
-        Log.d("SRP", "exporting: " + res.toString())
+        Log.d("SRP", "exporting: $res")
         return res
     }
 
