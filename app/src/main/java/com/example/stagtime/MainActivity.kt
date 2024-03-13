@@ -12,7 +12,6 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
 import android.provider.MediaStore
@@ -141,25 +140,21 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun saveToFile(filename: String, content: String) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val values = ContentValues().apply {
-                put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
-                put(MediaStore.MediaColumns.MIME_TYPE, "application/json")
-                put(MediaStore.MediaColumns.RELATIVE_PATH, "Download/")
+        val values = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
+            put(MediaStore.MediaColumns.MIME_TYPE, "application/json")
+            put(MediaStore.MediaColumns.RELATIVE_PATH, "Download/")
+        }
+
+        val resolver = contentResolver
+        val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+
+        uri?.let {
+            resolver.openOutputStream(it).use { outputStream ->
+                outputStream?.write(content.toByteArray())
             }
+            Toast.makeText(this, "File saved to Downloads!", Toast.LENGTH_SHORT).show()
 
-            val resolver = contentResolver
-            val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
-
-            uri?.let {
-                resolver.openOutputStream(it).use { outputStream ->
-                    outputStream?.write(content.toByteArray())
-                }
-                Toast.makeText(this, "File saved to Downloads!", Toast.LENGTH_SHORT).show()
-
-            }
-        } else {
-            // For Android 9 and below, use the method described in the next section
         }
     }
 
