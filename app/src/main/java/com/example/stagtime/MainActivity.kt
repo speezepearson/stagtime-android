@@ -215,15 +215,11 @@ object Schedule {
     private fun pingsOnDayStartingAt(midnightSec: Long): List<Instant> {
         val prng = WeakPRNG(midnightSec)
         val numPings = prng.poisson(24.0)
-        val pings = mutableListOf<Instant>()
-        for (i in 0 until numPings) {
-            pings.add(Instant.ofEpochMilli(midnightSec * 1000 + (prng.random() * 86400_000).toLong()))
+        val offsetSecs = mutableSetOf<Long>()
+        while (offsetSecs.size < numPings) {
+            offsetSecs.add((86_400 * prng.random()).toLong())
         }
-        Log.d(
-            "SRP",
-            "$numPings pings: pingsOnDayStartingAt(${Instant.ofEpochSecond(midnightSec)}) = $pings"
-        )
-        return pings.sorted()
+        return offsetSecs.sorted().map { Instant.ofEpochSecond(midnightSec + it) }
     }
 
     fun lastBefore(t: Instant): Instant {
